@@ -1,0 +1,35 @@
+services:
+  proxy:
+    image: traefik:v3.2
+    networks:
+      - proxy
+    ports:
+      - 127.0.0.1:80:80
+    volumes:
+      - ./traefik.yml:/etc/traefik/traefik.yml:ro
+      - letsencrypt:/letsencrypt
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.dashboard.entryPoints=web"
+      - "traefik.http.routers.dashboard.rule=Host(`proxy.test`)"
+      - "traefik.http.services.dashboard.loadBalancer.server.port=8080"
+
+  maildev:
+    image: maildev/maildev:2.2.1
+    networks:
+      - proxy
+    ports:
+      - 127.0.0.1:1025:1025
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.maildev.entryPoints=web"
+      - "traefik.http.routers.maildev.rule=Host(`mail.test`)"
+      - "traefik.http.services.maildev.loadBalancer.server.port=1080"
+
+volumes:
+  letsencrypt:
+
+networks:
+  proxy:
+    name: proxy
